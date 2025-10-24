@@ -1,20 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, Dispatch, SetStateAction } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import type { Navigation } from "../types/navigation";
-import { Home, RefreshCcw, Inbox } from "lucide-react";
+import { Home, RefreshCcw, Inbox, LogOut, X } from "lucide-react";
+import { useAuth } from "../stores/useAuth.ts";
 
-export default function Sidebar() {
+interface SidebarProps {
+  sidebarOpen: boolean;
+  setSidebarOpen: Dispatch<SetStateAction<boolean>>;
+}
+
+export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   const [role, setRole] = useState<"admin" | "user">("user");
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const auth = useAuth();
 
   const switchRole = (newRole: "admin" | "user") => {
     setRole(newRole);
     if (newRole === "admin") router.push("/admin");
     else router.push("/");
+    setSidebarOpen(false);
+  };
+
+  const confirmLogout = () => {
+    auth.logout();
+    setLogoutDialogOpen(false);
+    setSidebarOpen(false);
+    router.push("/auth/login");
   };
 
   const menus: Navigation = {
@@ -29,38 +45,104 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-white p-4 border-r border-gray-200">
-      <h2 className="text-2xl font-bold mb-6 mt-7">{role.toUpperCase()}</h2>
-      <ul>
-        {menus[role].map((menu, idx) => {
-          const Icon = menu.icon;
-          const isActive = menu.href ? pathname === menu.href : false;
+    <>
+      {/* Overlay สำหรับมือถือ */}
+      <div
+        className={`fixed inset-0 bg-black/30 z-40 md:hidden transition-opacity ${
+          sidebarOpen ? "opacity-100 visible" : "opacity-0 invisible"
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      ></div>
 
-          return (
-            <li key={idx} className="mb-4 flex items-center gap-2">
-              {menu.href ? (
-                <Link
-                  href={menu.href}
-                  className={`flex items-center gap-2 py-3 px-2 rounded w-full ${
-                    isActive ? "bg-blue-50" : "hover:bg-gray-100"
-                  }`}
-                >
-                  {Icon && <Icon className="w-5 h-5" />}
-                  {menu.name}
-                </Link>
-              ) : (
-                <button
-                  onClick={menu.action}
-                  className="hover:bg-gray-100 flex items-center gap-2 py-3 px-2 rounded w-full focus:outline-none"
-                >
-                  {Icon && <Icon className="w-5 h-5" />}
-                  {menu.name}
-                </button>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </aside>
+      <aside
+        className={`flex flex-col justify-between w-64 bg-white border-r border-gray-200 h-screen fixed z-50 transition-transform
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:static`}
+      >
+        <div>
+          {/* Close button สำหรับมือถือ */}
+          <div className="flex justify-end md:hidden p-4">
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-2 rounded hover:bg-gray-100 focus:outline-none"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <h2 className="text-2xl font-bold mb-6 mt-7 px-4">{role.toUpperCase()}</h2>
+          <ul>
+            {menus[role].map((menu, idx) => {
+              const Icon = menu.icon;
+              const isActive = menu.href ? pathname === menu.href : false;
+
+              return (
+                <li key={idx} className="mb-2">
+                  {menu.href ? (
+                    <Link
+                      href={menu.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center gap-2 py-3 px-4 rounded w-full transition-colors ${
+                        isActive ? "bg-blue-50 text-blue-600 font-semibold" : "hover:bg-gray-100"
+                      }`}
+                    >
+                      {Icon && <Icon className="w-5 h-5" />}
+                      {menu.name}
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={menu.action}
+                      className="flex items-center gap-2 py-3 px-4 rounded w-full hover:bg-gray-100 focus:outline-none transition-colors"
+                    >
+                      {Icon && <Icon className="w-5 h-5" />}
+                      {menu.name}
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        {/* Logout button */}
+        <div className="mb-4 px-4">
+          <button
+            onClick={() => setLogoutDialogOpen(true)}
+            className="flex items-center gap-2 py-3 px-4 rounded w-full text-red-600 hover:bg-red-50 transition-colors focus:outline-none"
+          >
+            <LogOut className="w-5 h-5" />
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* Logout Confirmation Dialog */}
+      {logoutDialogOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setLogoutDialogOpen(false)}
+          ></div>
+
+          <div className="bg-white rounded-lg shadow-lg z-50 p-6 max-w-sm w-full">
+            <h2 className="text-lg font-bold mb-4">Confirm Logout</h2>
+            <p className="mb-6">Are you sure you want to logout?</p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setLogoutDialogOpen(false)}
+                className="px-4 py-2 rounded hover:bg-gray-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

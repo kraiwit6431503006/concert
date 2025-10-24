@@ -1,29 +1,65 @@
 "use client";
 
-import { Award, Save, Trash2, User, XCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Save, User, Award, XCircle, X } from "lucide-react";
+import useConcert from "../stores/useConcert";
+import { Concert } from "../types/concert";
+import ConcertCard from "../components/concert/ConcertCard";
+import ConcertForm from "../components/concert/ConcertForm";
 
-type Stat = {
-  title: string;
-  value: number;
-  icon: React.ElementType;
-  color: string;
-};
+type ToastType = "success" | "error";
 
 export default function AdminHome() {
+  const { concerts, createConcert, deleteConcert } = useConcert();
   const tabs = ["Overview", "Create"];
   const [activeTab, setActiveTab] = useState("Overview");
+  const [loading, setLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Concert | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: ToastType;
+  } | null>(null);
 
-  const stats: Stat[] = [
-    { title: "Total Seats", value: 500, icon: User, color: "bg-sky-700" },
-    { title: "Reserved", value: 320, icon: Award, color: "bg-teal-500" },
-    { title: "Canceled", value: 50, icon: XCircle, color: "bg-red-400" },
-  ];
+  const showToast = (message: string, type: ToastType) => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+
+    try {
+      await deleteConcert(deleteTarget._id as string);
+      showToast("Concert deleted successfully!", "success");
+    } catch (err: any) {
+      showToast(err.message || "Failed to delete concert", "error");
+    } finally {
+      setDeleteConfirmOpen(false);
+      setDeleteTarget(null);
+    }
+  };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 relative">
+      {/* Toast */}
+      {toast && (
+        <div
+          className={`fixed top-6 right-6 px-4 py-2 rounded shadow-md text-white z-50 ${
+            toast.type === "success" ? "bg-green-500" : "bg-red-500"
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
+
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {stats.map((stat, idx) => {
+        {[
+          { title: "Total Seats", value: 500, icon: User, color: "bg-sky-700" },
+          { title: "Reserved", value: 320, icon: Award, color: "bg-teal-500" },
+          { title: "Canceled", value: 50, icon: XCircle, color: "bg-red-400" },
+        ].map((stat, idx) => {
           const Icon = stat.icon;
           return (
             <div
@@ -38,6 +74,7 @@ export default function AdminHome() {
         })}
       </div>
 
+      {/* Tabs */}
       <div className="flex mb-4">
         {tabs.map((tab) => (
           <button
@@ -50,103 +87,66 @@ export default function AdminHome() {
             }`}
           >
             {tab}
-            {/* underline for active tab */}
             {activeTab === tab && (
-              <span className="absolute left-0 bottom-0 w-full h-0.5 bg-blue-400 " />
+              <span className="absolute left-0 bottom-0 w-full h-0.5 bg-blue-400" />
             )}
           </button>
         ))}
       </div>
 
-      {activeTab === "Overview" && (
-        <div className=" bg-white border border-neutral-300 rounded-lg p-4 space-y-4">
-          <h1 className="text-blue-400 font-bold text-2xl">Concert Name</h1>
-          <div className="border-b border-neutral-300"></div>
-          <p>
-            Lorem ipsum dolor sit amet consectetur. Elit purus nam gravida
-            porttitor nibh urna sit ornare a. Proin dolor morbi id ornare aenean
-            non. Fusce dignissim turpis sed non est orci sed in. Blandit ut
-            purus nunc sed donec commodo morbi diam scelerisque.
-          </p>
-          <div className="flex justify-between">
-            <div className="flex items-center">
-              <User className="mr-2" /> 2000
+      {/* Overview */}
+      {activeTab === "Overview" &&
+        concerts.map((concert: Concert, idx) => (
+          <ConcertCard
+            key={idx}
+            item={concert}
+            onDelete={() => {
+              setDeleteTarget(concert);
+              setDeleteConfirmOpen(true);
+            }}
+          />
+        ))}
+
+      {deleteConfirmOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white rounded-lg p-6 w-96  space-y-4">
+            <div className="flex justify-center">
+              <div className="rounded-full p-2 w-fit bg-red-400">
+                <X className="w-7 h-7 text-white" />
+              </div>
             </div>
-            <button
-              type="button"
-              className="px-4 flex py-2 bg-red-400 rounded-md text-white"
-            >
-              <Trash2 className="mr-2" />
-              Delete
-            </button>
+
+            <div className="text-center">
+              <p className="text-xl font-bold">Are you sure to delete?</p>
+              <p className="text-xl font-bold">"{deleteTarget?.name}"</p>
+            </div>
+
+            <div className="mt-6 flex space-x-4">
+              <button
+                onClick={() => setDeleteConfirmOpen(false)}
+                className="px-4 py-2 rounded-md border w-full"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 rounded-md bg-red-400 text-white w-full"
+              >
+                Yes, Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
 
+      {/* Create */}
+
       {activeTab === "Create" && (
-        <div className="bg-white border border-neutral-300 rounded-lg p-6 space-y-6 shadow-sm">
-          <h1 className="text-blue-500 font-bold text-2xl">Create</h1>
-          <div className="border-b border-neutral-300"></div>
-
-          <form>
-            <div className="grid grid-cols-12 gap-4">
-              {/* Concert Name */}
-              <div className="col-span-12 md:col-span-6">
-                <label className="block mb-2 font-medium text-gray-700">
-                  Concert Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="Please input concert name"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-                />
-              </div>
-
-              {/* Total of Seats */}
-              <div className="col-span-12 md:col-span-6">
-                <label
-                  htmlFor="total-seats"
-                  className="block mb-2 text-gray-700 font-medium"
-                >
-                  Total of Seats
-                </label>
-                <div className="relative">
-                  <input
-                    id="total-seats"
-                    type="number"
-                    placeholder="500"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-                  />
-                  <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                    <User className="w-5 h-5 text-gray-400" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="col-span-12">
-                <label className="block mb-2 font-medium text-gray-700">
-                  Description
-                </label>
-                <textarea
-                  placeholder="Please input description"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 resize-none"
-                  rows={4}
-                />
-              </div>
-
-              <div className="col-span-12 flex justify-end">
-                <button
-                  type="button"
-                  className="px-4 flex py-2 bg-blue-400 rounded-md text-white"
-                >
-                  <Save className="mr-2" />
-                  Save
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
+        <ConcertForm
+          onCreate={async (data) => await createConcert(data)}
+          loading={loading}
+          toastHandler={showToast}
+        />
       )}
     </div>
   );
