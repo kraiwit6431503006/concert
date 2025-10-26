@@ -22,7 +22,7 @@
 | **zustand**           | Lightweight state management ใช้แทน Redux หรือ Pinia    |
 
 
-### Frontend (Next.js)
+### Backend (NestJS)
 
 | Package                                                                       | Description                                                        |
 | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ |
@@ -93,6 +93,31 @@ NEXT_PUBLIC_API_URL=http://localhost:5001
 npm run dev
 ```
 
+## Running Unit Tests
 
+### Enter to backend
 
+```bash
+cd backend
+```
+
+### Run Unit Tests
+
+NestJS uses Jest for testing. To run all unit tests:
+
+```bash
+npm run test
+```
+
+To run tests in watch mode (auto-re-run when files change):
+
+```bash
+npm run test
+```
+
+To run tests with code coverage:
+
+```bash
+npm run test:coverage
+```
 
