@@ -1,7 +1,5 @@
 # Concert Conjai Project
 
----
-
 ## Tech Stack
 
 - **Frontend**: Next.js + TypeScript + Tailwind CSS
