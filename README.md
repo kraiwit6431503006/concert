@@ -60,7 +60,7 @@ PORT=5001
 MONGO_URI=mongodb://localhost:27017/concertdb
 FRONTEND_URL=http://localhost:3000
 ```
-### 3.Run NestJS development server:
+### 4.Run NestJS development server:
 
 ```bash
 npm run start:dev
@@ -87,7 +87,7 @@ npm install
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:5001
 ```
-### 3.Run Next.js development server:
+### 4.Run Next.js development server:
 
 ```bash
 npm run dev
@@ -100,6 +100,8 @@ npm run dev
 ```bash
 cd backend
 ```
+
+---
 
 ### Run Unit Tests
 
