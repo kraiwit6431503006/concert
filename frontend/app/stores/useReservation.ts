@@ -1,7 +1,10 @@
+"use client";
+
 import { create } from "zustand";
 import { useAuth } from "./useAuth.ts";
-import { Concert } from "../types/concert.js";
-import { Reservation, ReservationStats , ReservationHistory} from "../types/reservation.js";
+import { Concert } from "../types/concert";
+import { Reservation, ReservationStats, ReservationHistory } from "../types/reservation";
+import * as api from "@/app/lib/api";
 
 interface ReservationState {
   concerts: Concert[];
@@ -27,127 +30,91 @@ export const useReservation = create<ReservationState>((set, get) => ({
   concerts: [],
   reservations: [],
   allReservations: [],
-  history:[],
+  history: [],
   loading: null,
   error: null,
   stats: { reservedCount: 0, canceledCount: 0, totalCapacity: 0 },
 
   fetchConcerts: async () => {
     try {
-      const res = await fetch("http://localhost:5001/concerts");
-      if (!res.ok) throw new Error("Failed to fetch concerts");
-      const data = await res.json();
+      const data = await api.get<Concert[]>("/concerts");
       set({ concerts: data });
     } catch (err: any) {
-      set({ error: err.message || "Unknown error" });
+      set({ error: err.message || "Failed to fetch concerts" });
     }
   },
 
   fetchReservations: async () => {
-    const { user } = useAuth.getState();
-    const userId = user?._id;
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!userId || !token) return;
-
     try {
-      const res = await fetch("http://localhost:5001/reservations", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to fetch reservations");
-      const data = await res.json();
+      const data = await api.get<Reservation[]>("/reservations", true);
       set({ reservations: data });
     } catch (err: any) {
-      console.error(err);
+      set({ error: err.message || "Failed to fetch reservations" });
     }
   },
 
   fetchAllReservations: async () => {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!token) return;
-
     try {
-      const res = await fetch("http://localhost:5001/reservations/all", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to fetch all reservations");
-      const data = await res.json();
+      const data = await api.get<Reservation[]>("/reservations/all", true);
       set({ allReservations: data });
     } catch (err: any) {
-      console.error(err);
+      set({ error: err.message || "Failed to fetch all reservations" });
+    }
+  },
+
+  fetchStats: async () => {
+    try {
+      const data = await api.get<ReservationStats>("/reservations/stats", true);
+      set({ stats: data });
+    } catch (err: any) {
+      set({ error: err.message || "Failed to fetch stats" });
+    }
+  },
+
+  fetchHistory: async () => {
+    try {
+      const data = await api.get<ReservationHistory[]>("/reservations/history", true);
+      set({ history: data });
+    } catch (err: any) {
+      set({ error: err.message || "Failed to fetch history" });
     }
   },
 
   handleReserve: async (concertId) => {
     const { user } = useAuth.getState();
-    const userId = user?._id;
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!userId || !token) return;
+    if (!user) return;
 
     set({ loading: concertId });
     try {
-      const res = await fetch(
-        `http://localhost:5001/reservations/${concertId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ concertId, userId }),
-        }
-      );
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to reserve concert");
-      }
-
+      await api.post(`/reservations/${concertId}`, { concertId, userId: user._id }, true);
       await get().fetchReservations();
     } catch (err: any) {
-      alert(err.message || "Unknown error");
+      alert(err.message || "Failed to reserve concert");
     } finally {
       set({ loading: null });
     }
   },
 
   handleCancel: async (concertId) => {
-    const { user } = useAuth.getState();
-    const userId = user?._id;
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const { reservations } = get();
-    if (!userId || !token) return;
+    const { user: currentUser } = useAuth.getState();
+    if (!currentUser || !reservations) return;
 
     set({ loading: concertId });
+
     try {
       const reservation = reservations.find(
         (r) =>
-          (typeof r.concertId === "string" ? r.concertId : r.concertId._id) ===
-            concertId &&
+          (typeof r.concertId === "string" ? r.concertId : r.concertId._id) === concertId &&
           r.status === "reserved" &&
-          r.userId === userId
+          r.userId === currentUser._id
       );
       if (!reservation) return;
 
-      const res = await fetch(
-        `http://localhost:5001/reservations/cancel/${reservation._id}`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Failed to cancel reservation");
-      }
-
+      await api.post(`/reservations/cancel/${reservation._id}`, {}, true);
       await get().fetchReservations();
     } catch (err: any) {
-      alert(err.message || "Unknown error");
+      alert(err.message || "Failed to cancel reservation");
     } finally {
       set({ loading: null });
     }
@@ -156,13 +123,11 @@ export const useReservation = create<ReservationState>((set, get) => ({
   isReserved: (concertId) => {
     const { reservations } = get();
     const { user } = useAuth.getState();
-    const userId = user?._id;
     return reservations.some(
       (r) =>
         r.status === "reserved" &&
-        (typeof r.concertId === "string" ? r.concertId : r.concertId._id) ===
-          concertId &&
-        r.userId === userId
+        (typeof r.concertId === "string" ? r.concertId : r.concertId._id) === concertId &&
+        r.userId === user?._id
     );
   },
 
@@ -170,36 +135,8 @@ export const useReservation = create<ReservationState>((set, get) => ({
     const { allReservations } = get();
     return allReservations.filter(
       (r) =>
-        (typeof r.concertId === "string" ? r.concertId : r.concertId._id) ===
-          concertId && r.status === "reserved"
+        (typeof r.concertId === "string" ? r.concertId : r.concertId._id) === concertId &&
+        r.status === "reserved"
     ).length;
-  },
-
-  fetchStats: async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5001/reservations/stats", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to fetch stats");
-      const data = await res.json();
-      set({ stats: data });
-    } catch (err: any) {
-      console.error(err);
-    }
-  },
-
-  fetchHistory: async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5001/reservations/history", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Failed to fetch history");
-      const data = await res.json();
-      set({ history: data });
-    } catch (err: any) {
-      console.error(err);
-    }
   },
 }));

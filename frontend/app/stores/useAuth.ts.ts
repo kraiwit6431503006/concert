@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { User } from "../types/user";
+import * as api from "@/app/lib/api";
 
 interface AuthState {
   token: string | null;
@@ -32,14 +33,7 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   register: async (username, email, password) => {
     try {
-      const res = await fetch("http://localhost:5001/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Register failed");
+      await api.post("/auth/register", { username, email, password });
     } catch (err: any) {
       throw new Error(err.message || "Register failed");
     }
@@ -47,15 +41,7 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   login: async (email, password) => {
     try {
-      const res = await fetch("http://localhost:5001/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Login failed");
-
+      const data = await api.post<{ access_token: string }>("/auth/login", { email, password });
       get().setToken(data.access_token);
       await get().fetchUser();
     } catch (err: any) {
@@ -69,23 +55,11 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   fetchUser: async () => {
-    const token =
-      get().token ||
-      (typeof window !== "undefined" ? localStorage.getItem("token") : null);
-
+    const token = get().token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
     if (!token) return;
 
     try {
-      const res = await fetch("http://localhost:5001/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) {
-        get().logout();
-        return;
-      }
-
-      const user = await res.json();
+      const user = await api.get<User>("/auth/me", true);
       get().setUser(user);
     } catch (err) {
       get().logout();

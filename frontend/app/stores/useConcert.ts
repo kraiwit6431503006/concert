@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Concert } from "../types/concert";
+import * as api from "@/app/lib/api";
 
 interface CreateConcertData {
   name: string;
@@ -18,9 +19,7 @@ export default function useConcert() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("http://localhost:5001/concerts");
-      if (!res.ok) throw new Error("Failed to fetch concerts");
-      const data: Concert[] = await res.json();
+      const data = await api.get<Concert[]>("/concerts");
       setConcerts(data);
     } catch (err: any) {
       setError(err.message || "Unknown error");
@@ -31,13 +30,7 @@ export default function useConcert() {
 
   const createConcert = async (concert: CreateConcertData) => {
     try {
-      const res = await fetch("http://localhost:5001/concerts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(concert),
-      });
-      if (!res.ok) throw new Error("Failed to create concert");
-      const data: Concert = await res.json();
+      const data = await api.post<Concert>("/concerts", concert);
       setConcerts((prev) => [...prev, data]);
       return data;
     } catch (err: any) {
@@ -47,8 +40,7 @@ export default function useConcert() {
 
   const deleteConcert = async (id: string) => {
     try {
-      const res = await fetch(`http://localhost:5001/concerts/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete concert");
+      await api.del(`/concerts/${id}`);
       setConcerts((prev) => prev.filter((c) => c._id !== id));
     } catch (err: any) {
       setError(err.message || "Unknown error");
