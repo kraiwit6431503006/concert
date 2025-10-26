@@ -1,5 +1,5 @@
 export interface Concert {
-  _id?: string;
+  _id: string;
   name: string;
   capacity: number;
   description?: string;

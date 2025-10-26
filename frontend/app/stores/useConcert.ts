@@ -3,6 +3,12 @@
 import { useState, useEffect } from "react";
 import { Concert } from "../types/concert";
 
+interface CreateConcertData {
+  name: string;
+  capacity: number;
+  description: string;
+}
+
 export default function useConcert() {
   const [concerts, setConcerts] = useState<Concert[]>([]);
   const [loading, setLoading] = useState(false);
@@ -23,7 +29,7 @@ export default function useConcert() {
     }
   };
 
-  const createConcert = async (concert: Concert) => {
+  const createConcert = async (concert: CreateConcertData) => {
     try {
       const res = await fetch("http://localhost:5001/concerts", {
         method: "POST",

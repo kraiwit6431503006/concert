@@ -7,7 +7,9 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  register(@Body() body: { username: string; email: string; password: string }) {
+  register(
+    @Body() body: { username: string; email: string; password: string },
+  ) {
     return this.authService.register(body.username, body.email, body.password);
   }
 
@@ -20,5 +22,11 @@ export class AuthController {
   @Get('logout')
   logout(@Req() req) {
     return { message: `User ${req.user.email} logged out` };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  getMe(@Req() req: any) {
+    return this.authService.getMe(req.user.userId)
   }
 }

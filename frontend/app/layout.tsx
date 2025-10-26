@@ -26,6 +26,8 @@ export default function RootLayout({
   if (isAuthPage) {
     return (
       <html lang="en">
+        <title>Concert Conjai</title>
+        <link rel="icon" type="image/svg" href="/logo.svg" />
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
@@ -41,10 +43,12 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <title>Concert Conjai</title>
+      <link rel="icon" type="image/svg" href="/logo.svg" />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="flex min-h-screen">
+        <div className="flex h-screen">
           {/* Desktop Sidebar */}
           <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
@@ -57,10 +61,13 @@ export default function RootLayout({
               >
                 <Menu className="w-6 h-6" />
               </button>
-              <h1 className="text-xl font-bold ml-2"> Concert</h1>
+              <h1 className="text-xl font-bold ml-2">Concert</h1>
             </header>
 
-            <main className="flex-1 bg-gray-100">{children}</main>
+            {/* Main scrollable */}
+            <main className="flex-1 bg-gray-100 overflow-auto p-4">
+              {children}
+            </main>
           </div>
         </div>
       </body>

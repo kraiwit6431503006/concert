@@ -5,9 +5,13 @@ import { Save, User, X } from "lucide-react";
 import { Concert } from "@/app/types/concert";
 
 type ToastType = "success" | "error";
-
+interface CreateConcertData {
+  name: string;
+  capacity: number;
+  description: string;
+}
 interface Props {
-  onCreate: (data: { name: string; capacity: number; description: string }) => Promise<Concert | undefined>;
+   onCreate: (data: CreateConcertData) => Promise<Concert | undefined>;
   loading?: boolean;
   toastHandler: (message: string, type: ToastType) => void;
 }

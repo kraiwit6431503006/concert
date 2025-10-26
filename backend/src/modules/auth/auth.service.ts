@@ -23,4 +23,10 @@ export class AuthService {
 
     return { access_token: token };
   }
+
+  async getMe(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) throw new UnauthorizedException('User not found');
+    return user;
+  }
 }

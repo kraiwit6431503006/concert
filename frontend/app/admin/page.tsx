@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Save, User, Award, XCircle, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { User, Award, XCircle, X } from "lucide-react";
 import useConcert from "../stores/useConcert";
 import { Concert } from "../types/concert";
 import ConcertCard from "../components/concert/ConcertCard";
 import ConcertForm from "../components/concert/ConcertForm";
+import { useReservation } from "../stores/useReservation";
 
 type ToastType = "success" | "error";
 
 export default function AdminHome() {
   const { concerts, createConcert, deleteConcert } = useConcert();
+  const { stats, fetchStats } = useReservation();
   const tabs = ["Overview", "Create"];
   const [activeTab, setActiveTab] = useState("Overview");
   const [loading, setLoading] = useState(false);
@@ -20,6 +22,13 @@ export default function AdminHome() {
     message: string;
     type: ToastType;
   } | null>(null);
+
+  useEffect(() => {
+    const init = async () => {
+      await fetchStats();
+    };
+    init();
+  }, []);
 
   const showToast = (message: string, type: ToastType) => {
     setToast({ message, type });
@@ -41,7 +50,7 @@ export default function AdminHome() {
   };
 
   return (
-    <div className="p-6 space-y-6 relative">
+    <div className="p-2 md:p-6 space-y-6 relative">
       {/* Toast */}
       {toast && (
         <div
@@ -56,9 +65,24 @@ export default function AdminHome() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {[
-          { title: "Total Seats", value: 500, icon: User, color: "bg-sky-700" },
-          { title: "Reserved", value: 320, icon: Award, color: "bg-teal-500" },
-          { title: "Canceled", value: 50, icon: XCircle, color: "bg-red-400" },
+          {
+            title: "Total Seats",
+            value: stats.totalCapacity,
+            icon: User,
+            color: "bg-sky-700",
+          },
+          {
+            title: "Reserved",
+            value: stats.reservedCount,
+            icon: Award,
+            color: "bg-teal-500",
+          },
+          {
+            title: "Canceled",
+            value: stats.canceledCount,
+            icon: XCircle,
+            color: "bg-red-400",
+          },
         ].map((stat, idx) => {
           const Icon = stat.icon;
           return (
@@ -143,7 +167,11 @@ export default function AdminHome() {
 
       {activeTab === "Create" && (
         <ConcertForm
-          onCreate={async (data) => await createConcert(data)}
+          onCreate={async (data) => {
+            const result = await createConcert(data);
+            if (result) setActiveTab("Overview");
+            return result;
+          }}
           loading={loading}
           toastHandler={showToast}
         />

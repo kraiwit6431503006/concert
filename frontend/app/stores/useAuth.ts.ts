@@ -1,9 +1,5 @@
 import { create } from "zustand";
-
-interface User {
-  username: string;
-  email: string;
-}
+import { User } from "../types/user";
 
 interface AuthState {
   token: string | null;
@@ -19,7 +15,7 @@ interface AuthState {
 }
 
 export const useAuth = create<AuthState>((set, get) => ({
-  token: null,
+  token: typeof window !== "undefined" ? localStorage.getItem("token") : null,
   user: null,
 
   setToken: (token) => {
@@ -32,7 +28,7 @@ export const useAuth = create<AuthState>((set, get) => ({
 
   setUser: (user) => set({ user }),
 
-  isAuthenticated: () => !!get().token,
+  isAuthenticated: () => !!get().token && !!get().user,
 
   register: async (username, email, password) => {
     try {
@@ -73,7 +69,10 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   fetchUser: async () => {
-    const token = get().token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+    const token =
+      get().token ||
+      (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+
     if (!token) return;
 
     try {
