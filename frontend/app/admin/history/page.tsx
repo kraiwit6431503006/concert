@@ -62,7 +62,7 @@ export default function AdminHistory() {
                     {item.userId.username}
                   </td>
                   <td className="px-3 md:px-4 py-2 border border-gray-300">
-                    {item.concertId.name}
+                    {item.concertId ? item.concertId.name : "Concert deleted"}
                   </td>
                   <td className="px-3 md:px-4 py-2 border border-gray-300">
                     {item.action === "reserved" ? "Reserve" : "Cancel"}

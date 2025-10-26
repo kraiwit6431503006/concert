@@ -1,24 +1,63 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../stores/useAuth.ts";
 
-export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+export default function ProtectedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const auth = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // หน้า /auth/* ไม่ต้อง redirect
-    if (pathname.startsWith("/auth")) return;
+    const checkAuth = async () => {
+      if (pathname.startsWith("/auth") && auth.token) {
+        router.replace("/");
+        return;
+      }
 
-    if (!auth.isAuthenticated()) {
-      router.push("/auth/login");
-    }
+      if (pathname.startsWith("/auth")) {
+        setLoading(false);
+        return;
+      }
+
+      if (auth.token && !auth.user) {
+        try {
+          await auth.fetchUser();
+        } catch {
+          auth.logout();
+          router.replace("/auth/login");
+          return;
+        }
+      }
+
+      if (!auth.token) {
+        router.replace("/auth/login");
+        return;
+      }
+
+      setLoading(false);
+    };
+
+    checkAuth();
   }, [auth, router, pathname]);
 
-  if (!auth.isAuthenticated() && !pathname.startsWith("/auth")) return null;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!auth.user && !pathname.startsWith("/auth")) {
+    return null;
+  }
 
   return <>{children}</>;
 }

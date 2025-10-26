@@ -123,20 +123,22 @@ export const useReservation = create<ReservationState>((set, get) => ({
   isReserved: (concertId) => {
     const { reservations } = get();
     const { user } = useAuth.getState();
-    return reservations.some(
-      (r) =>
-        r.status === "reserved" &&
-        (typeof r.concertId === "string" ? r.concertId : r.concertId._id) === concertId &&
-        r.userId === user?._id
-    );
-  },
+    return reservations.some((r) => {
+      if (!r.concertId) return false;
+      const cid = typeof r.concertId === "string" ? r.concertId : r.concertId._id;
+      return r.status === "reserved" && cid === concertId && r.userId === user?._id;
+    });
+  },  
 
   reservedCount: (concertId) => {
     const { allReservations } = get();
-    return allReservations.filter(
-      (r) =>
-        (typeof r.concertId === "string" ? r.concertId : r.concertId._id) === concertId &&
-        r.status === "reserved"
-    ).length;
+    return allReservations.filter((r) => {
+      if (!r.concertId) return false;
+      if (typeof r.concertId === "string") {
+        return r.concertId === concertId && r.status === "reserved";
+      }
+      return r.concertId._id === concertId && r.status === "reserved";
+    }).length;
   },
+  
 }));
