@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/stores/useAuth.ts";
+import { useAuth } from "@/app/stores/useAuth";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -34,26 +34,26 @@ export default function LoginPage() {
 
   return (
     <>
-      <h2 className="text-2xl font-bold mb-6 text-center">Sign in</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center text-red-700">Sign in</h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block mb-1">Email</label>
+          <label className="block mb-1 text-white">Email</label>
           <input
             type="email"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2"
+            className="w-full bg-neutral-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-0 focus:ring-neutral-800"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
 
-        <label className="block mb-1">Password</label>
+        <label className="block mb-1 text-white">Password</label>
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full bg-neutral-800 text-white rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-0 focus:ring-neutral-800"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -73,14 +73,14 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600"
+          className="w-full bg-red-700 text-white py-2 rounded-lg hover:bg-red-800"
         >
           Sign in
         </button>
 
         <p className="text-center text-neutral-400">
           Don't have an account?{" "}
-          <Link href="/auth/register" className="text-blue-500 hover:underline">
+          <Link href="/auth/register" className="text-red-700 hover:underline">
             Sign up
           </Link>
         </p>

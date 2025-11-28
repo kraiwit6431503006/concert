@@ -27,14 +27,14 @@ export default function RootLayout({
   if (isAuthPage) {
     return (
       <html lang="en">
-        <title>Concert Conjai</title>
+        <title>Movie Time</title>
         <link rel="icon" type="image/svg" href="/logo.svg" />
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <ProtectedLayout>
-            <div className="min-h-screen flex items-center justify-center bg-gray-100">
-              <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
+            <div className="min-h-screen flex items-center justify-center bg-black">
+              <div className="w-full max-w-md bg-neutral-900 p-8 rounded-lg shadow-lg">
                 {children}
               </div>
             </div>
@@ -46,7 +46,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <title>Concert Conjai</title>
+      <title>Movie Time</title>
       <link rel="icon" type="image/svg" href="/logo.svg" />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
@@ -61,18 +61,26 @@ export default function RootLayout({
 
             <div className="flex-1 flex flex-col">
               {/* Mobile Header */}
-              <header className="md:hidden flex items-center justify-start bg-white p-4 border-b border-gray-200">
+              <header className="md:hidden flex items-center justify-start bg-black p-4">
                 <button
                   onClick={() => setSidebarOpen(!sidebarOpen)}
                   className="p-2 rounded hover:bg-gray-100 focus:outline-none"
                 >
-                  <Menu className="w-6 h-6" />
+                  <Menu className="w-6 h-6 text-white" />
                 </button>
-                <h1 className="text-xl font-bold ml-2">Concert</h1>
+                <div className="flex items-center space-x-1">
+                  <div className="bg-red-700 text-white font-extrabold text-xl md:text-2xl w-8 h-8 flex items-center justify-center rounded-sm">
+                    M
+                  </div>
+                  {/* Title */}
+                  <h1 className="text-xl md:text-2xl font-bold text-white drop-shadow-md">
+                    ovie Time
+                  </h1>
+                </div>
               </header>
 
               {/* Main scrollable */}
-              <main className="flex-1 bg-gray-100 overflow-auto p-4">
+              <main className="flex-1 bg-black overflow-auto p-2 md:p-4">
                 {children}
               </main>
             </div>

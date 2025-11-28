@@ -5,8 +5,9 @@ import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { ConcertsModule } from './modules/concerts/concerts.module';
-import { ReservationsModule } from './modules/reservations/reservations.module';
+import { MoviesModule } from './modules/movies/movies.module';
+import { RatingsModule } from './modules/ratings/ratings.module';
+import { RecommendationModule } from './modules/recommendation/recommendation.module';
 
 @Module({
   imports: [
@@ -16,8 +17,9 @@ import { ReservationsModule } from './modules/reservations/reservations.module';
     MongooseModule.forRoot(process.env.MONGO_URI),
     UsersModule,
     AuthModule,
-    ConcertsModule,
-    ReservationsModule,
+    MoviesModule,
+    RatingsModule,
+    RecommendationModule
   ],
   controllers: [AppController],
   providers: [AppService],

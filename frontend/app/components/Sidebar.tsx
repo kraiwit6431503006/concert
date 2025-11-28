@@ -1,37 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useState, Dispatch, SetStateAction, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import type { Navigation } from "../types/navigation";
-import { Home, RefreshCcw, Inbox, LogOut, X } from "lucide-react";
-import { useAuth } from "../stores/useAuth.ts";
+import { Home, LayoutGrid, LogOut, X } from "lucide-react";
+import { useAuth } from "../stores/useAuth";
 
 interface SidebarProps {
   sidebarOpen: boolean;
-  setSidebarOpen: Dispatch<SetStateAction<boolean>>;
+  setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const [role, setRole] = useState<"admin" | "user">(
-    pathname?.startsWith("/admin") ? "admin" : "user"
-  );
   const auth = useAuth();
-
-  useEffect(() => {
-    if (pathname?.startsWith("/admin")) setRole("admin");
-    else setRole("user");
-  }, [pathname]);
-
-  const switchRole = (newRole: "admin" | "user") => {
-    setRole(newRole);
-    if (newRole === "admin") router.push("/admin");
-    else router.push("/");
-    setSidebarOpen(false);
-  };
 
   const confirmLogout = () => {
     auth.logout();
@@ -40,24 +24,10 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
     router.push("/auth/login");
   };
 
-  const menus: Navigation = {
-    admin: [
-      { name: "Home", href: "/admin", icon: Home },
-      { name: "History", href: "/admin/history", icon: Inbox },
-      {
-        name: "Switch to User",
-        action: () => switchRole("user"),
-        icon: RefreshCcw,
-      },
-    ],
-    user: [
-      {
-        name: "Switch to Admin",
-        action: () => switchRole("admin"),
-        icon: RefreshCcw,
-      },
-    ],
-  };
+  const menus = [
+    { name: "Home", href: "/", icon: Home },
+    { name: "Movie Management", href: "/movie-management", icon: LayoutGrid },
+  ];
 
   return (
     <>
@@ -69,16 +39,23 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
       ></div>
 
       <aside
-        className={`flex flex-col justify-between w-64 bg-white border-r border-gray-200 h-screen fixed z-50 transition-transform
+        className={`flex flex-col justify-between w-64 bg-neutral-900 h-screen fixed z-50 transition-transform
           ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } md:translate-x-0 md:static`}
       >
         <div>
-          <div className="flex justify-between md:hidden ">
-            <h2 className="text-2xl font-bold mb-6 mt-7 px-4">
-            {role.toUpperCase()}
-          </h2>
+          {/* Header */}
+          <div className="flex justify-between md:hidden">
+            <div className="flex items-center px-4">
+              <div className="bg-red-700 text-white mr-1 font-extrabold text-xl md:text-2xl w-8 h-8 flex items-center justify-center rounded-sm">
+                M
+              </div>
+              {/* Title */}
+              <h1 className="text-xl md:text-2xl font-bold text-white drop-shadow-md">
+                ovie Time
+              </h1>
+            </div>
             <button
               onClick={() => setSidebarOpen(false)}
               className="p-2 rounded hover:bg-gray-100 focus:outline-none m-4"
@@ -87,39 +64,35 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
             </button>
           </div>
 
-         <h2 className="text-2xl font-bold mb-6 mt-7 px-4 hidden md:block">
-  {role.toUpperCase()}
-</h2>
+          <div className="hidden md:flex items-center px-4 pt-6 pb-5">
+            <div className="bg-red-700 text-white font-extrabold text-xl md:text-2xl w-8 h-8 flex items-center justify-center rounded-sm">
+              M
+            </div>
+            <h1 className="text-xl md:text-2xl font-bold text-white drop-shadow-md ml-2">
+              ovie Time
+            </h1>
+          </div>
 
+          {/* เมนู */}
           <ul>
-            {menus[role].map((menu, idx) => {
+            {menus.map((menu, idx) => {
               const Icon = menu.icon;
               const isActive = menu.href ? pathname === menu.href : false;
 
               return (
                 <li key={idx} className="mb-2">
-                  {menu.href ? (
-                    <Link
-                      href={menu.href}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-2 py-3 px-4 rounded w-full transition-colors ${
-                        isActive
-                          ? "bg-blue-50"
-                          : "hover:bg-gray-100"
-                      }`}
-                    >
-                      {Icon && <Icon className="w-5 h-5" />}
-                      {menu.name}
-                    </Link>
-                  ) : (
-                    <button
-                      onClick={menu.action}
-                      className="flex items-center gap-2 py-3 px-4 rounded w-full hover:bg-gray-100 focus:outline-none transition-colors"
-                    >
-                      {Icon && <Icon className="w-5 h-5" />}
-                      {menu.name}
-                    </button>
-                  )}
+                  <Link
+                    href={menu.href!}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center ml-2 mr-2 gap-2 py-3 px-4 rounded transition-colors ${
+                      isActive
+                        ? "bg-blue-50 text-black"
+                        : "hover:bg-white hover:text-black text-white"
+                    }`}
+                  >
+                    {Icon && <Icon className="w-5 h-5" />}
+                    {menu.name}
+                  </Link>
                 </li>
               );
             })}
@@ -130,7 +103,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
         <div className="mb-4 px-4">
           <button
             onClick={() => setLogoutDialogOpen(true)}
-            className="flex items-center gap-2 py-3 px-4 rounded w-full  hover:bg-red-50 transition-colors focus:outline-none"
+            className="flex items-center gap-2 py-3 px-4 rounded w-full bg-red-700 text-white transition-colors focus:outline-none"
           >
             <LogOut className="w-5 h-5" />
             Logout

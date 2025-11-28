@@ -1,127 +1,133 @@
 "use client";
 import { useEffect, useState } from "react";
-import { User } from "lucide-react";
-import { useAuth } from "./stores/useAuth.ts";
-import { useReservation } from "./stores/useReservation";
-
-interface Toast {
-  message: string;
-  type: "success" | "error";
-}
+import { useAuth } from "./stores/useAuth";
+import useMovie from "./stores/useMovie";
+import { Movie } from "./types/movie";
+import { Play, Star } from "lucide-react";
+import MovieModal from "./components/movie/MovieModal";
+import ReviewModal from "./components/movie/ReviewModal";
+import useRecommendation from "./stores/useRecommendation";
+import MovieCard from "./components/movie/MovieCard";
+import MovieBanner from "./components/movie/MovieBanner";
 
 export default function Home() {
   const { fetchUser, user } = useAuth();
+  const { fetchMovies, movies, createRating } = useMovie();
   const {
-    concerts,
-    error,
-    loading,
-    fetchConcerts,
-    fetchReservations,
-    fetchAllReservations,
-    handleReserve: reserveFn,
-    handleCancel: cancelFn,
-    isReserved,
-    reservedCount,
-  } = useReservation();
+    recommended,
+    loading: recLoading,
+    fetchRecommended,
+  } = useRecommendation(user?._id || null);
 
-  const [toast, setToast] = useState<Toast | null>(null);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [reviewMovie, setReviewMovie] = useState<Movie | null>(null);
+  const [showReview, setShowReview] = useState(false);
 
   useEffect(() => {
     const init = async () => {
       await fetchUser();
+      await fetchMovies();
     };
     init();
   }, []);
 
-  useEffect(() => {
-    if (user?._id) {
-      fetchConcerts();
-      fetchReservations();
-      fetchAllReservations();
-    }
-  }, [user]);
+  const categories = ["Popular", "Action", "Comedy", "Sci-fi"];
+  const getMoviesByCategory = (category: string) =>
+    movies.filter((m) => m.genres.includes(category));
 
-  const handleReserve = async (concertId: string) => {
+  const handleReviewSubmit = async (rating: number) => {
+    if (!reviewMovie) return;
     try {
-      await reserveFn(concertId);
-      setToast({ message: "Reservation successful!", type: "success" });
-    } catch (err: any) {
-      setToast({ message: err.message || "Failed to reserve", type: "error" });
-    } finally {
-      setTimeout(() => setToast(null), 3000);
-    }
-  };
-
-  const handleCancel = async (concertId: string) => {
-    try {
-      await cancelFn(concertId);
-      setToast({ message: "Reservation canceled!", type: "success" });
-    } catch (err: any) {
-      setToast({ message: err.message || "Failed to cancel", type: "error" });
-    } finally {
-      setTimeout(() => setToast(null), 3000);
+      const userId = user?._id ? user._id : "s";
+      await createRating({
+        userId,
+        movieId: reviewMovie._id,
+        rating,
+      });
+      alert(`You rated ${reviewMovie.title} ${rating} stars`);
+      fetchRecommended();
+    } catch (err) {
+      console.error(err);
     }
   };
 
   return (
-    <div className="space-y-4 p-2 md:p-6">
-      {error && <p className="text-red-500">{error}</p>}
+    <div className="bg-black text-white min-h-screen p-4 space-y-8">
+      {/* Banner */}
+      <MovieBanner
+        selectedMovie={setSelectedMovie}
+        item={movies[0]}
+        showReview={() => {
+          setReviewMovie(movies[0]);
+          setShowReview(true);
+        }}
+      />
 
-      {concerts.map((concert) => {
-        const reserved = isReserved(concert._id);
-        const full = reservedCount(concert._id) >= concert.capacity;
+      {/* Recommended */}
+      {recommended.length !== 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl md:text-2xl font-semibold">
+            Recommended for you
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            {recommended.map((movie) => (
+              <MovieCard
+                key={movie._id}
+                item={movie}
+                selectedMovie={setSelectedMovie}
+                showReview={() => {
+                  setReviewMovie(movie);
+                  setShowReview(true);
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Categories */}
+      {categories.map((cat) => {
+        const catMovies = getMoviesByCategory(cat);
+        if (!catMovies.length) return null;
 
         return (
-          <div
-            key={concert._id}
-            className="bg-white border border-neutral-300 rounded-lg p-4 space-y-4"
-          >
-            <h1 className="text-blue-400 font-bold text-2xl">{concert.name}</h1>
-            <p>{concert.description}</p>
-
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <User className="mr-2" /> {concert.capacity}
-              </div>
-
-              {reserved ? (
-                <button
-                  onClick={() => handleCancel(concert._id)}
-                  disabled={loading === concert._id}
-                  className="px-4 py-2 bg-red-400 rounded-md text-white"
-                >
-                  {loading === concert._id ? "Canceling..." : "Cancel"}
-                </button>
-              ) : full ? (
-                <button
-                  disabled
-                  className="px-4 py-2 bg-gray-400 rounded-md text-white"
-                >
-                  Full
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleReserve(concert._id)}
-                  disabled={loading === concert._id}
-                  className="px-4 py-2 bg-blue-400 rounded-md text-white"
-                >
-                  {loading === concert._id ? "Reserving..." : "Reserve"}
-                </button>
-              )}
+          <div key={cat} className="space-y-4">
+            <h2 className="text-xl md:text-2xl font-semibold">{cat}</h2>
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+              {catMovies.map((movie) => (
+                <MovieCard
+                  key={movie._id}
+                  item={movie}
+                  selectedMovie={setSelectedMovie}
+                  showReview={() => {
+                    setReviewMovie(movie);
+                    setShowReview(true);
+                  }}
+                />
+              ))}
             </div>
           </div>
         );
       })}
 
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`fixed top-6 right-6 px-4 py-2 rounded shadow-md text-white z-50 ${
-            toast.type === "success" ? "bg-green-500" : "bg-red-500"
-          }`}
-        >
-          {toast.message}
-        </div>
+      {/* Movie Modal */}
+      <MovieModal
+        movie={selectedMovie}
+        onClose={() => setSelectedMovie(null)}
+        onReview={() => {
+    if (selectedMovie) {
+      setReviewMovie(selectedMovie);
+      setShowReview(true);
+    }
+  }}
+      />
+      {/* Review Modal */}
+      {showReview && reviewMovie && (
+        <ReviewModal
+          movieTitle={reviewMovie.title}
+          onClose={() => setShowReview(false)}
+          onSubmit={handleReviewSubmit}
+        />
       )}
     </div>
   );
