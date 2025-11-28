@@ -12,7 +12,7 @@ export class RecommendationService {
     @InjectModel(Movie.name) private movieModel: Model<Movie>,
   ) {}
 
-  // --- build user rating map ---
+  // build user rating map
   private async buildUserRatingMap() {
     const ratings = await this.ratingModel.find();
     const userMap: Record<string, any> = {};
@@ -25,7 +25,7 @@ export class RecommendationService {
     return userMap;
   }
 
-  // --- Predict rating ---
+  //  Predict rating 
   private predictRating(targetUser, targetMovie, userMap) {
     let numerator = 0;
     let denominator = 0;
@@ -43,7 +43,7 @@ export class RecommendationService {
     return denominator === 0 ? 0 : numerator / denominator;
   }
 
-  // --- Recommend movies ---
+  // Recommend movies
   async recommendForUser(userId: string) {
     const userMap = await this.buildUserRatingMap();
 

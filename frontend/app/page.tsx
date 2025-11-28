@@ -31,7 +31,7 @@ export default function Home() {
     init();
   }, []);
 
-  const categories = ["Popular", "Action", "Comedy", "Sci-fi"];
+  const categories = ["Drama", "Action", "Comedy", "Sci-fi"];
   const getMoviesByCategory = (category: string) =>
     movies.filter((m) => m.genres.includes(category));
 
